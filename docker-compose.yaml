@@ -1,0 +1,15 @@
+version: '3.5'
+
+services:
+  db:
+    container_name: greenlight
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=admin
+    image: postgres:15.1-alpine
+    volumes:
+      - db:/var/lib/postgres
+volumes:
+  db:

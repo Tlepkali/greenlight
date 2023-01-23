@@ -1,2 +1,0 @@
-# greenlight
-Movie DB OpenAPI

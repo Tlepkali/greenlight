@@ -1,0 +1,9 @@
+docker pull postgres
+docker images
+docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+docker ps -a
+docker run --name postgresql -e POSTGRES_USER=myusername -e POSTGRES_PASSWORD=mypassword -p 5432:5432 -v /data:/var/lib/postgresql/data -d postgres
+docker start postgresqldb
+docker exec -it postgresql psql -U tlep
+docker volume create todo-db
+docker run -dp 3000:3000 --mount type=volume,src=todo-db,target=/etc/todos getting-started
