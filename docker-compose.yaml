@@ -7,7 +7,7 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=admin
-      - POSTGRES_USER=admin
+      - POSTGRES_USER=greenlight
     image: postgres:15.1-alpine
     volumes:
       - db:/var/lib/postgres
