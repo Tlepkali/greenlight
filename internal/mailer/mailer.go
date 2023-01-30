@@ -3,18 +3,19 @@ package mailer
 import (
 	"bytes"
 	"embed"
-	"text/template"
+	"html/template"
 	"time"
 
 	"github.com/go-mail/mail/v2"
 )
 
-var templateFS embed.FS
-
 type Mailer struct {
 	dialer *mail.Dialer
 	sender string
 }
+
+//go:embed "templates"
+var templateFS embed.FS
 
 func New(host string, port int, username, password, sender string) Mailer {
 	dialer := mail.NewDialer(host, port, username, password)
@@ -57,10 +58,15 @@ func (m Mailer) Send(recipient, templateFile string, data any) error {
 	msg.SetBody("text/plain", plainBody.String())
 	msg.AddAlternative("text/html", htmlBody.String())
 
-	err = m.dialer.DialAndSend(msg)
-	if err != nil {
-		return err
+	for i := 1; i <= 3; i++ {
+		err = m.dialer.DialAndSend(msg)
+
+		if nil == err {
+			return nil
+		}
+
+		time.Sleep(500 * time.Millisecond)
 	}
 
-	return nil
+	return err
 }
