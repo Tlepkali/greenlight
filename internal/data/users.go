@@ -30,7 +30,14 @@ type UserModel struct {
 	DB *sql.DB
 }
 
-var ErrDuplicateEmail = errors.New("duplicate email")
+var (
+	ErrDuplicateEmail = errors.New("duplicate email")
+	AnonymousUser     = &User{}
+)
+
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
+}
 
 func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))

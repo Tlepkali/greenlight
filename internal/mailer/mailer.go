@@ -17,6 +17,13 @@ type Mailer struct {
 //go:embed "templates"
 var templateFS embed.FS
 
+// @RequestMapping("/api/v1/users")
+type UserCoontroller struct{}
+
+// @Get(":id")
+func (c *UserCoontroller) GetOne() {
+}
+
 func New(host string, port int, username, password, sender string) Mailer {
 	dialer := mail.NewDialer(host, port, username, password)
 	dialer.Timeout = 5 * time.Second

@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
+	"fmt"
 	"os"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,6 +19,8 @@ import (
 )
 
 const version = "1.0.0"
+
+var buildTime string
 
 type config struct {
 	port int
@@ -37,6 +43,9 @@ type config struct {
 		password string
 		sender   string
 	}
+	cors struct {
+		trustedOrigins []string
+	}
 }
 
 type application struct {
@@ -53,7 +62,7 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 
-	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("GREENLIGHT_DB_DSN"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "", "PostgreSQL DSN")
 
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
@@ -69,7 +78,20 @@ func main() {
 	flag.StringVar(&cfg.smtp.password, "smtp-password", "d23677c76da17d", "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply@greenlight.tlep.net>", "SMTP sender")
 
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		cfg.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
+
+	displayVersion := flag.Bool("version", false, "Display version and exit")
+
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("Version:\t%s\n", version)
+		fmt.Printf("Build time:\t%s\n", buildTime)
+		os.Exit(0)
+	}
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
@@ -80,6 +102,20 @@ func main() {
 	defer db.Close()
 
 	logger.PrintInfo("database connection pool established", nil)
+
+	expvar.NewString("version").Set(version)
+
+	expvar.Publish("goroutines", expvar.Func(func() interface{} {
+		return runtime.NumGoroutine()
+	}))
+
+	expvar.Publish("database", expvar.Func(func() interface{} {
+		return db.Stats()
+	}))
+
+	expvar.Publish("timestamp", expvar.Func(func() interface{} {
+		return time.Now().Unix()
+	}))
 
 	app := &application{
 		config: cfg,
